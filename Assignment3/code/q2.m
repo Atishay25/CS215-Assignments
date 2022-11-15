@@ -1,34 +1,37 @@
-rng(0);
+rng(0)          % setting seed as 0
 
-N = [5; 10; 20; 40; 60; 80; 100; 500; 10^3; 10^4];
-M = 125;
-lambda = 5;
-alpha = 5.5;
+N = [5; 10; 20; 40; 60; 80; 100; 500; 10^3; 10^4];  % Number of data sample points drawn
+M = 125;        % Number of times experiment to be repeated for each N
+lambda = 5;     % True value of lambda
+alpha = 5.5;    % Gamma function parameters
 beta = 1;
 
-error_ml = zeros(M*size(N,1),1);
-error_pm = zeros(M*size(N,1),1);
-N_value = zeros(M*size(N,1),1);
+error_ml = zeros(size(N,1),M);
+error_pm = zeros(size(N,1),M);
+N_value = zeros(1,size(N,1));
 
 for n = 1:size(N,1)
     for m = 1:M
-        data = -0.2.*log(rand(N(n,1),1));
-        lambda_ml = N(n,1)./sum(data);
-        lambda_pm = (N(n,1) + alpha)./(sum(data) + beta); 
-        error_ml(M*(n-1)+m,1) = abs(lambda_ml-lambda)./lambda;
-        error_pm(M*(n-1)+m,1) = abs(lambda_pm-lambda)./lambda;
-        N_value(M*(n-1)+m,1) = N(n,1);
+        data = -0.2.*log(rand(N(n,1),1));       % Generating sample data points
+        lambda_ml = N(n,1)./sum(data);          % ML estimate for lambda
+        lambda_pm = (N(n,1) + alpha)./(sum(data) + beta);   % Posterior Mean estimate for lambda
+        error_ml(n,m) = abs(lambda_ml-lambda)./lambda;      % Relative Errors
+        error_pm(n,m) = abs(lambda_pm-lambda)./lambda;
     end
+    N_value(1,n) = N(n,1);
 end
 
+% Plotting a single Boxplot for Relative errors
+% for each N for each Estimate
 figure(1);
-boxplot(error_ml,N_value);
+boxplot(error_ml.','Labels',N_value,'Widths',0.25,'Positions',(1:numel(N_value)));
+hold on;
+boxplot(error_pm.','Labels',N_value,'Widths',0.25,'Positions',(1:numel(N_value))+0.32,'Colors','k');
+lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', 'r');       % Setting color of Median line to be Red
+plot(NaN,1,'Color','b')
+plot(NaN,1,'Color','k')
+legend({'Error in MLE','Error in MPE'})
 xlabel('N')
-ylabel('Error')
-title('Boxplot of Error between True lambda & ML Estimate')
-
-figure(2);
-boxplot(error_pm,N_value);
-xlabel('N')
-ylabel('Error')
-title('Boxplot of Error between True lambda & Bayesian Estimate')
+ylabel('Relative Error')
+title('Relative Error between \lambda_{true} & its Estimates')
